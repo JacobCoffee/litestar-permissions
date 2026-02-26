@@ -1,0 +1,285 @@
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.10.2,<0.11.0"]
+
+[dependency-groups]
+docs = [
+  "linkify-it-py>=2.0.0",
+  "myst-parser>=2.0.0",
+  "shibuya>=2024.8.0",
+  "sphinx>=7.0.0",
+  "sphinx-autobuild>=2024.0.0",
+  "sphinx-autodoc-typehints>=2.0.0",
+  "sphinx-copybutton>=0.5.0",
+  "sphinx-design>=0.5.0",
+  "sphinx-tabs>=3.4.0",
+]
+lint = [
+  "codespell>=2.2.6",
+  "prek>=0.2.18",
+  "ruff>=0.8.0",
+  "ty>=0.0.1a27",
+]
+test = [
+  "pytest>=8.1.1",
+  "pytest-asyncio>=0.23.6",
+  "pytest-cov>=4.1.0",
+  "pytest-sugar>=1.1.1",
+]
+dev = [
+  {include-group = "docs"},
+  {include-group = "lint"},
+  {include-group = "test"},
+]
+
+[project]
+authors = [
+  {name = "Jacob Coffee", email = "jacob@z7x.org"}
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Web Environment",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Security",
+  "Typing :: Typed",
+]
+dependencies = [
+  "litestar>=2.0",
+  "sqlalchemy>=2.0",
+]
+description = "Fine-grained hierarchical RBAC for Litestar applications"
+keywords = [
+  "rbac",
+  "permissions",
+  "authorization",
+  "litestar",
+  "async",
+]
+license = {text = "MIT"}
+name = "litestar-permissions"
+readme = "README.md"
+requires-python = ">=3.12"
+version = "0.1.0"
+
+[project.urls]
+Changelog = "https://github.com/JacobCoffee/litestar-permissions/releases/"
+Discord = "https://discord.gg/litestar-919193495116337154"
+Documentation = "https://jacobcoffee.github.io/litestar-permissions"
+"Issue Tracker" = "https://github.com/JacobCoffee/litestar-permissions/issues"
+Repository = "https://github.com/JacobCoffee/litestar-permissions"
+
+[tool.codespell]
+skip = "uv.lock"
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "\\.\\.\\.",
+  "@abstractmethod",
+  "class .*(Protocol):",
+]
+fail_under = 0
+
+[tool.coverage.run]
+concurrency = ["multiprocessing", "thread"]
+omit = ["*/tests/*"]
+parallel = true
+source = ["litestar_permissions"]
+
+[tool.git-cliff.changelog]
+header = """
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+"""
+body = """
+{% if version %}\
+    {% if previous.version %}\
+## [{{ version | trim_start_matches(pat="v") }}]($REPO/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+    {% else %}\
+## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+    {% endif %}\
+{% else %}\
+## [unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+
+### {{ group | striptags | trim | upper_first }}
+
+{% for commit in commits
+| filter(attribute="scope")
+| sort(attribute="scope") %}
+- **({{commit.scope}})**{% if commit.breaking %} [**breaking**]{% endif %} {{ commit.message }} - ([{{ commit.id | truncate(length=7, end="") }}]($REPO/commit/{{ commit.id }})) - {{ commit.author.name }}
+{%- endfor -%}
+{%- for commit in commits %}
+{%- if commit.scope -%}
+{% else %}
+- {% if commit.breaking %}[**breaking**] {% endif %}{{ commit.message }} - ([{{ commit.id | truncate(length=7, end="") }}]($REPO/commit/{{ commit.id }})) - {{ commit.author.name }}
+{% endif -%}
+{% endfor -%}
+{% endfor %}
+"""
+footer = """
+---
+*litestar-permissions Changelog*
+"""
+output = "docs/changelog.md"
+postprocessors = [
+  {pattern = '\$REPO', replace = "https://github.com/JacobCoffee/litestar-permissions"},
+]
+trim = true
+
+[tool.git-cliff.git]
+commit_parsers = [
+  {message = "^feat", group = "Features"},
+  {message = "^fix", group = "Bug Fixes"},
+  {message = "^doc", group = "Documentation"},
+  {message = "^perf", group = "Performance"},
+  {message = "^refactor", group = "Refactoring"},
+  {message = "^style", group = "Style"},
+  {message = "^revert", group = "Revert"},
+  {message = "^test", group = "Tests"},
+  {message = "^chore\\(version\\):", skip = true},
+  {message = "^chore", group = "Miscellaneous Chores"},
+  {body = ".*security", group = "Security"},
+]
+commit_preprocessors = []
+conventional_commits = true
+filter_commits = false
+filter_unconventional = true
+ignore_tags = ""
+protect_breaking_commits = false
+skip_tags = "v0.1.0-beta.1"
+sort_commits = "oldest"
+split_commits = false
+tag_pattern = "v[0-9].*"
+topo_order = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = ["-v", "--strict-markers", "--tb=short"]
+markers = [
+  "unit: mark test as unit test",
+  "integration: mark test as integration test",
+]
+
+[tool.ruff]
+fix = true
+line-length = 120
+src = ["src/litestar_permissions", "tests"]
+target-version = "py312"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 88
+indent-style = "space"
+quote-style = "double"
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+ignore = [
+  "ERA001",
+  "TD",
+  "FIX002",
+  "COM812",
+  "ISC001",
+  "ANN401",
+  "TC003",
+  "EM101",
+  "EM102",
+  "TRY003",
+  "TRY002",
+  "ARG002",
+  "FBT001",
+  "FBT002",
+  "FBT003",
+  "PLC0415",
+  "PLR0911",
+  "PLR0913",
+  "PLR2004",
+  "S105",
+  "S106",
+  "S107",
+  "A005",
+  "D",
+]
+select = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["litestar_permissions", "tests"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
+[tool.ruff.lint.per-file-ignores]
+"docs/conf.py" = [
+  "A001",
+  "INP001",
+  "PTH",
+  "DTZ",
+]
+"tests/**/*.*" = [
+  "A",
+  "ANN",
+  "ARG",
+  "B",
+  "BLE",
+  "C901",
+  "D",
+  "DTZ",
+  "EM",
+  "ERA001",
+  "F841",
+  "FBT",
+  "G",
+  "N",
+  "PGH",
+  "PIE",
+  "PLR",
+  "PLW",
+  "PT011",
+  "PTH",
+  "RET504",
+  "RSE",
+  "S",
+  "S101",
+  "SIM",
+  "SLF001",
+  "TCH",
+  "TRY",
+  "UP006",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ty]
+
+[tool.ty.environment]
+python = ".venv"
+
+[tool.ty.rules]
+deprecated = "warn"
+
+[tool.ty.src]
+exclude = ["docs/conf.py", "tests/"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.build-backend]
+module-root = "src"
