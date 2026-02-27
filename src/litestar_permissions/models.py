@@ -30,8 +30,10 @@ def create_models(base: type[DeclarativeBase], table_prefix: str = "", class_pre
     Args:
         base: The SQLAlchemy declarative base to bind models to.
         table_prefix: Prefix for database table names.
-        class_prefix: Prefix for ORM class names to avoid registry conflicts
-            when the app already has models with the same names (e.g. ``Role``).
+        class_prefix: Cosmetic prefix for ORM class ``__name__`` attributes, affecting
+            ``repr()`` and logging output. For actual registry conflict avoidance,
+            remove the conflicting model or use ``PermissionsPlugin(models=...)``
+            to inject pre-created models.
 
     Returns dict with keys: 'Role', 'Permission', 'RolePermission', 'UserRoleAssignment'
     """
