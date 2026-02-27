@@ -104,6 +104,7 @@ data-aria-dark="Switch to auto color mode">
 </li>
 <li><a class="reference internal" href="#litestar_permissions.PermissionsConfig"><code class="docutils literal notranslate"><span class="pre">PermissionsConfig</span></code></a><ul>
 <li><a class="reference internal" href="#litestar_permissions.PermissionsConfig.table_prefix"><code class="docutils literal notranslate">table_prefix</span></code></a></li>
+<li><a class="reference internal" href="#litestar_permissions.PermissionsConfig.class_prefix"><code class="docutils literal notranslate">class_prefix</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.PermissionsConfig.cache_ttl"><code class="docutils literal notranslate">cache_ttl</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.PermissionsConfig.cache_max_size"><code class="docutils literal notranslate">cache_max_size</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.PermissionsConfig.hierarchy"><code class="docutils literal notranslate">hierarchy</span></code></a></li>
@@ -134,11 +135,13 @@ data-aria-dark="Switch to auto color mode">
 </ul>
 </li>
 <li><a class="reference internal" href="#litestar_permissions.UserRoleAssignment"><code class="docutils literal notranslate"><span class="pre">UserRoleAssignment</span></code></a></li>
+<li><a class="reference internal" href="#litestar_permissions.create_models"><code class="docutils literal notranslate"><span class="pre">create_models()</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.require_permission"><code class="docutils literal notranslate"><span class="pre">require_permission()</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.require_role"><code class="docutils literal notranslate"><span class="pre">require_role()</span></code></a></li>
 <li><a class="reference internal" href="#module-litestar_permissions.config">Config</a><ul>
 <li><a class="reference internal" href="#litestar_permissions.config.PermissionsConfig"><code class="docutils literal notranslate"><span class="pre">PermissionsConfig</span></code></a><ul>
 <li><a class="reference internal" href="#litestar_permissions.config.PermissionsConfig.table_prefix"><code class="docutils literal notranslate">table_prefix</span></code></a></li>
+<li><a class="reference internal" href="#litestar_permissions.config.PermissionsConfig.class_prefix"><code class="docutils literal notranslate">class_prefix</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.config.PermissionsConfig.cache_ttl"><code class="docutils literal notranslate">cache_ttl</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.config.PermissionsConfig.cache_max_size"><code class="docutils literal notranslate">cache_max_size</span></code></a></li>
 <li><a class="reference internal" href="#litestar_permissions.config.PermissionsConfig.hierarchy"><code class="docutils literal notranslate">hierarchy</span></code></a></li>
@@ -267,7 +270,7 @@ they inherit all permissions on projects and applications within org X.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.PermissionResolver.can">
-<span class="sig-name descname"><span class="pre">can</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.can"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.PermissionResolver.can" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">can</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.can"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.PermissionResolver.can" title="Link to this definition">¶</a></dt>
 <dd><p>Check if user has the given permission, optionally scoped to a resource.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -279,7 +282,7 @@ they inherit all permissions on projects and applications within org X.</p>
 <li><p><strong>permission</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>resource_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>resource_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.14)"><em>UUID</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session" title="(in SQLAlchemy v2.0)"><em>Session</em></a>)</p></li>
+<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession" title="(in SQLAlchemy v2.0)"><em>AsyncSession</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -287,7 +290,7 @@ they inherit all permissions on projects and applications within org X.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.PermissionResolver.get_user_permissions">
-<span class="sig-name descname"><span class="pre">get_user_permissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.get_user_permissions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.PermissionResolver.get_user_permissions" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_user_permissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.get_user_permissions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.PermissionResolver.get_user_permissions" title="Link to this definition">¶</a></dt>
 <dd><p>Get all permission codenames a user has at the given scope (+ ancestors).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -298,7 +301,7 @@ they inherit all permissions on projects and applications within org X.</p>
 <li><p><strong>user_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.14)"><em>UUID</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>resource_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>resource_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.14)"><em>UUID</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session" title="(in SQLAlchemy v2.0)"><em>Session</em></a>)</p></li>
+<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession" title="(in SQLAlchemy v2.0)"><em>AsyncSession</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -341,6 +344,11 @@ they inherit all permissions on projects and applications within org X.</p>
 <dd></dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="litestar_permissions.PermissionsConfig.class_prefix">
+<span class="sig-name descname"><span class="pre">class_prefix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#litestar_permissions.PermissionsConfig.class_prefix" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="litestar_permissions.PermissionsConfig.cache_ttl">
 <span class="sig-name descname"><span class="pre">cache_ttl</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">300</span></span><a class="headerlink" href="#litestar_permissions.PermissionsConfig.cache_ttl" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -372,11 +380,12 @@ they inherit all permissions on projects and applications within org X.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.PermissionsConfig.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_resolver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superuser_bypass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#litestar_permissions.PermissionsConfig.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_resolver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superuser_bypass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#litestar_permissions.PermissionsConfig.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>table_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>class_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>cache_ttl</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>cache_max_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em>)</p></li>
@@ -397,6 +406,12 @@ they inherit all permissions on projects and applications within org X.</p>
 <dt class="sig sig-object py" id="litestar_permissions.PermissionsPlugin">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">litestar_permissions.</span></span><span class="sig-name descname"><span class="pre">PermissionsPlugin</span></span><a class="reference internal" href="../_modules/litestar_permissions/plugin.html#PermissionsPlugin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.PermissionsPlugin" title="Link to this definition">¶</a></dt>
 <dd><p>Litestar plugin for fine-grained hierarchical RBAC.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Consumers must populate <code class="docutils literal notranslate"><span class="pre">scope[&quot;db_session&quot;]</span></code> with a per-request
+<code class="docutils literal notranslate"><span class="pre">AsyncSession</span></code> for guards and middleware to function. This is typically
+done via middleware or a dependency that writes to the ASGI scope.</p>
+</div>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="kn">from</span><span class="w"> </span><span class="nn">litestar_permissions</span><span class="w"> </span><span class="kn">import</span> <span class="n">PermissionsPlugin</span><span class="p">,</span> <span class="n">PermissionsConfig</span>
 </span><span data-line="2">
@@ -411,12 +426,13 @@ they inherit all permissions on projects and applications within org X.</p>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.PermissionsPlugin.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/plugin.html#PermissionsPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.PermissionsPlugin.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/plugin.html#PermissionsPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.PermissionsPlugin.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<a class="reference internal" href="#litestar_permissions.config.PermissionsConfig" title="litestar_permissions.config.PermissionsConfig"><em>PermissionsConfig</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>base</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>[</em><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/mapping_api.html#sqlalchemy.orm.DeclarativeBase" title="(in SQLAlchemy v2.0)"><em>DeclarativeBase</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>models</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -539,6 +555,28 @@ they inherit all permissions on projects and applications within org X.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="litestar_permissions.create_models">
+<span class="sig-prename descclassname"><span class="pre">litestar_permissions.</span></span><span class="sig-name descname"><span class="pre">create_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/models.html#create_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.create_models" title="Link to this definition">¶</a></dt>
+<dd><p>Factory that creates concrete RBAC models bound to the app’s Base.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>[<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/mapping_api.html#sqlalchemy.orm.DeclarativeBase" title="(in SQLAlchemy v2.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeclarativeBase</span></code></a>]</span>) – The SQLAlchemy declarative base to bind models to.</p></li>
+<li><p><strong>table_prefix</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Prefix for database table names.</p></li>
+<li><p><strong>class_prefix</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Cosmetic prefix for ORM class <code class="docutils literal notranslate"><span class="pre">__name__</span></code> attributes, affecting
+<code class="docutils literal notranslate"><span class="pre">repr()</span></code> and logging output. For actual registry conflict avoidance,
+remove the conflicting model or use <code class="docutils literal notranslate"><span class="pre">PermissionsPlugin(models=...)</span></code>
+to inject pre-created models.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>]</span></p>
+</dd>
+</dl>
+<p>Returns dict with keys: ‘Role’, ‘Permission’, ‘RolePermission’, ‘UserRoleAssignment’</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="litestar_permissions.require_permission">
 <span class="sig-prename descclassname"><span class="pre">litestar_permissions.</span></span><span class="sig-name descname"><span class="pre">require_permission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">permissions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id_param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/guards.html#require_permission"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.require_permission" title="Link to this definition">¶</a></dt>
 <dd><p>Guard factory that checks if the current user has ALL of the specified permissions.</p>
@@ -559,6 +597,11 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 <dt>Usage:</dt><dd><p>&#64;get(“/apps/{app_id}/deploy”, guards=[require_permission(“application:deploy”, resource_id_param=”app_id”)])</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Consumers must populate <code class="docutils literal notranslate"><span class="pre">connection.scope[&quot;db_session&quot;]</span></code> with a per-request
+<code class="docutils literal notranslate"><span class="pre">AsyncSession</span></code> (e.g. via middleware or a dependency that writes to scope).</p>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -577,6 +620,11 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span></p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Consumers must populate <code class="docutils literal notranslate"><span class="pre">connection.scope[&quot;db_session&quot;]</span></code> with a per-request
+<code class="docutils literal notranslate"><span class="pre">AsyncSession</span></code> (e.g. via middleware or a dependency that writes to scope).</p>
+</div>
 </dd></dl>
 
 <section id="module-litestar_permissions.config">
@@ -588,6 +636,11 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 <dl class="py attribute">
 <dt class="sig sig-object py" id="litestar_permissions.config.PermissionsConfig.table_prefix">
 <span class="sig-name descname"><span class="pre">table_prefix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#litestar_permissions.config.PermissionsConfig.table_prefix" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="litestar_permissions.config.PermissionsConfig.class_prefix">
+<span class="sig-name descname"><span class="pre">class_prefix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></span><a class="headerlink" href="#litestar_permissions.config.PermissionsConfig.class_prefix" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -622,11 +675,12 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.config.PermissionsConfig.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_resolver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superuser_bypass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#litestar_permissions.config.PermissionsConfig.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_max_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_resolver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'user'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superuser_bypass</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#litestar_permissions.config.PermissionsConfig.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>table_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<li><p><strong>class_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>cache_ttl</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>cache_max_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>)</p></li>
 <li><p><strong>hierarchy</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>]</em>)</p></li>
@@ -650,6 +704,12 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 <dt class="sig sig-object py" id="litestar_permissions.plugin.PermissionsPlugin">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">litestar_permissions.plugin.</span></span><span class="sig-name descname"><span class="pre">PermissionsPlugin</span></span><a class="reference internal" href="../_modules/litestar_permissions/plugin.html#PermissionsPlugin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.plugin.PermissionsPlugin" title="Link to this definition">¶</a></dt>
 <dd><p>Litestar plugin for fine-grained hierarchical RBAC.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Consumers must populate <code class="docutils literal notranslate"><span class="pre">scope[&quot;db_session&quot;]</span></code> with a per-request
+<code class="docutils literal notranslate"><span class="pre">AsyncSession</span></code> for guards and middleware to function. This is typically
+done via middleware or a dependency that writes to the ASGI scope.</p>
+</div>
 <p>Example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="kn">from</span><span class="w"> </span><span class="nn">litestar_permissions</span><span class="w"> </span><span class="kn">import</span> <span class="n">PermissionsPlugin</span><span class="p">,</span> <span class="n">PermissionsConfig</span>
 </span><span data-line="2">
@@ -664,12 +724,13 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.plugin.PermissionsPlugin.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/plugin.html#PermissionsPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.plugin.PermissionsPlugin.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">models</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/plugin.html#PermissionsPlugin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.plugin.PermissionsPlugin.__init__" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>config</strong> (<a class="reference internal" href="#litestar_permissions.config.PermissionsConfig" title="litestar_permissions.config.PermissionsConfig"><em>PermissionsConfig</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>base</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>[</em><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/mapping_api.html#sqlalchemy.orm.DeclarativeBase" title="(in SQLAlchemy v2.0)"><em>DeclarativeBase</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>models</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>] </em><em>| </em><em>None</em>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -751,7 +812,7 @@ they inherit all permissions on projects and applications within org X.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.resolver.PermissionResolver.can">
-<span class="sig-name descname"><span class="pre">can</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.can"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.resolver.PermissionResolver.can" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">can</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.can"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.resolver.PermissionResolver.can" title="Link to this definition">¶</a></dt>
 <dd><p>Check if user has the given permission, optionally scoped to a resource.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -763,7 +824,7 @@ they inherit all permissions on projects and applications within org X.</p>
 <li><p><strong>permission</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>resource_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>resource_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.14)"><em>UUID</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session" title="(in SQLAlchemy v2.0)"><em>Session</em></a>)</p></li>
+<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession" title="(in SQLAlchemy v2.0)"><em>AsyncSession</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -771,7 +832,7 @@ they inherit all permissions on projects and applications within org X.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="litestar_permissions.resolver.PermissionResolver.get_user_permissions">
-<span class="sig-name descname"><span class="pre">get_user_permissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.get_user_permissions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.resolver.PermissionResolver.get_user_permissions" title="Link to this definition">¶</a></dt>
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_user_permissions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/resolver.html#PermissionResolver.get_user_permissions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.resolver.PermissionResolver.get_user_permissions" title="Link to this definition">¶</a></dt>
 <dd><p>Get all permission codenames a user has at the given scope (+ ancestors).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -782,7 +843,7 @@ they inherit all permissions on projects and applications within org X.</p>
 <li><p><strong>user_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.14)"><em>UUID</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
 <li><p><strong>resource_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
 <li><p><strong>resource_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/uuid.html#uuid.UUID" title="(in Python v3.14)"><em>UUID</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em> | </em><em>None</em>)</p></li>
-<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/session_api.html#sqlalchemy.orm.Session" title="(in SQLAlchemy v2.0)"><em>Session</em></a>)</p></li>
+<li><p><strong>db</strong> (<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/extensions/asyncio.html#sqlalchemy.ext.asyncio.AsyncSession" title="(in SQLAlchemy v2.0)"><em>AsyncSession</em></a>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -839,6 +900,11 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 <dt>Usage:</dt><dd><p>&#64;get(“/apps/{app_id}/deploy”, guards=[require_permission(“application:deploy”, resource_id_param=”app_id”)])</p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Consumers must populate <code class="docutils literal notranslate"><span class="pre">connection.scope[&quot;db_session&quot;]</span></code> with a per-request
+<code class="docutils literal notranslate"><span class="pre">AsyncSession</span></code> (e.g. via middleware or a dependency that writes to scope).</p>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -857,6 +923,11 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span></p>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Consumers must populate <code class="docutils literal notranslate"><span class="pre">connection.scope[&quot;db_session&quot;]</span></code> with a per-request
+<code class="docutils literal notranslate"><span class="pre">AsyncSession</span></code> (e.g. via middleware or a dependency that writes to scope).</p>
+</div>
 </dd></dl>
 
 </section>
@@ -866,6 +937,11 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 <dt class="sig sig-object py" id="litestar_permissions.middleware.PermissionsMiddleware">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">litestar_permissions.middleware.</span></span><span class="sig-name descname"><span class="pre">PermissionsMiddleware</span></span><a class="reference internal" href="../_modules/litestar_permissions/middleware.html#PermissionsMiddleware"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.middleware.PermissionsMiddleware" title="Link to this definition">¶</a></dt>
 <dd><p>Injects the user’s resolved permissions into request scope for template use.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Consumers must populate <code class="docutils literal notranslate"><span class="pre">scope[&quot;db_session&quot;]</span></code> with a per-request
+<code class="docutils literal notranslate"><span class="pre">AsyncSession</span></code> before this middleware runs (e.g. via an earlier middleware).</p>
+</div>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="litestar_permissions.middleware.PermissionsMiddleware.scopes">
 <span class="sig-name descname"><span class="pre">scopes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><span class="pre">set</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'http'}</span></span><a class="headerlink" href="#litestar_permissions.middleware.PermissionsMiddleware.scopes" title="Link to this definition">¶</a></dt>
@@ -954,20 +1030,24 @@ If None, uses resource_id_param with a fixed resource_type from the guard config
 
 <dl class="py function">
 <dt class="sig sig-object py" id="litestar_permissions.models.create_models">
-<span class="sig-prename descclassname"><span class="pre">litestar_permissions.models.</span></span><span class="sig-name descname"><span class="pre">create_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/models.html#create_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.models.create_models" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">litestar_permissions.models.</span></span><span class="sig-name descname"><span class="pre">create_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/litestar_permissions/models.html#create_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#litestar_permissions.models.create_models" title="Link to this definition">¶</a></dt>
 <dd><p>Factory that creates concrete RBAC models bound to the app’s Base.</p>
-<p>Returns dict with keys: ‘Role’, ‘Permission’, ‘RolePermission’, ‘UserRoleAssignment’</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>]</span></p>
-</dd>
-<dt class="field-even">Parameters<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>base</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>[</em><a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/mapping_api.html#sqlalchemy.orm.DeclarativeBase" title="(in SQLAlchemy v2.0)"><em>DeclarativeBase</em></a><em>]</em>)</p></li>
-<li><p><strong>table_prefix</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>[<a class="reference external" href="https://docs.sqlalchemy.org/en/20/orm/mapping_api.html#sqlalchemy.orm.DeclarativeBase" title="(in SQLAlchemy v2.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DeclarativeBase</span></code></a>]</span>) – The SQLAlchemy declarative base to bind models to.</p></li>
+<li><p><strong>table_prefix</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Prefix for database table names.</p></li>
+<li><p><strong>class_prefix</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>) – Cosmetic prefix for ORM class <code class="docutils literal notranslate"><span class="pre">__name__</span></code> attributes, affecting
+<code class="docutils literal notranslate"><span class="pre">repr()</span></code> and logging output. For actual registry conflict avoidance,
+remove the conflicting model or use <code class="docutils literal notranslate"><span class="pre">PermissionsPlugin(models=...)</span></code>
+to inject pre-created models.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>]</span></p>
+</dd>
 </dl>
+<p>Returns dict with keys: ‘Role’, ‘Permission’, ‘RolePermission’, ‘UserRoleAssignment’</p>
 </dd></dl>
 
 </section>

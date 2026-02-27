@@ -128,216 +128,226 @@ data-aria-dark="Switch to auto color mode">
           <h1>Source code for litestar_permissions.resolver</h1><div class="highlight"><pre>
 <span></span><span data-line="1"><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 </span><span data-line="2">
-</span><span data-line="3"><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-</span><span data-line="4"><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
-</span><span data-line="5"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
-</span><span data-line="6"><span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">UUID</span>
-</span><span data-line="7">
-</span><span data-line="8"><span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">and_</span><span class="p">,</span> <span class="n">or_</span><span class="p">,</span> <span class="n">select</span>
-</span><span data-line="9">
-</span><span data-line="10"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-</span><span data-line="11">    <span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
-</span><span data-line="12">
-</span><span data-line="13">    <span class="kn">from</span><span class="w"> </span><span class="nn">litestar_permissions.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PermissionsConfig</span>
-</span><span data-line="14">
+</span><span data-line="3"><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+</span><span data-line="4"><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+</span><span data-line="5"><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
+</span><span data-line="6"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+</span><span data-line="7"><span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">UUID</span>
+</span><span data-line="8">
+</span><span data-line="9"><span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">and_</span><span class="p">,</span> <span class="n">or_</span><span class="p">,</span> <span class="n">select</span>
+</span><span data-line="10">
+</span><span data-line="11"><span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+</span><span data-line="12">    <span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.ext.asyncio</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncSession</span>
+</span><span data-line="13">
+</span><span data-line="14">    <span class="kn">from</span><span class="w"> </span><span class="nn">litestar_permissions.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PermissionsConfig</span>
 </span><span data-line="15">
+</span><span data-line="16">
 <div class="viewcode-block" id="PermissionResolver">
 <a class="viewcode-back" href="../../api/index.html#litestar_permissions.PermissionResolver">[docs]</a>
-</span><span data-line="16"><span class="k">class</span><span class="w"> </span><span class="nc">PermissionResolver</span><span class="p">:</span>
-</span><span data-line="17"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolves whether a user has a specific permission, optionally scoped to a resource.</span>
-</span><span data-line="18">
-</span><span data-line="19"><span class="sd">    Supports hierarchical inheritance: if a user has org-admin on org X,</span>
-</span><span data-line="20"><span class="sd">    they inherit all permissions on projects and applications within org X.</span>
-</span><span data-line="21"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span data-line="22">
+</span><span data-line="17"><span class="k">class</span><span class="w"> </span><span class="nc">PermissionResolver</span><span class="p">:</span>
+</span><span data-line="18"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolves whether a user has a specific permission, optionally scoped to a resource.</span>
+</span><span data-line="19">
+</span><span data-line="20"><span class="sd">    Supports hierarchical inheritance: if a user has org-admin on org X,</span>
+</span><span data-line="21"><span class="sd">    they inherit all permissions on projects and applications within org X.</span>
+</span><span data-line="22"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span data-line="23">
 <div class="viewcode-block" id="PermissionResolver.__init__">
 <a class="viewcode-back" href="../../api/index.html#litestar_permissions.PermissionResolver.__init__">[docs]</a>
-</span><span data-line="23">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PermissionsConfig</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="24">        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
-</span><span data-line="25">        <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
-</span><span data-line="26">        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span></div>
+</span><span data-line="24">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">PermissionsConfig</span><span class="p">,</span> <span class="n">models</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="25">        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+</span><span data-line="26">        <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
+</span><span data-line="27">        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span></div>
 
-</span><span data-line="27">
+</span><span data-line="28">
 <div class="viewcode-block" id="PermissionResolver.can">
 <a class="viewcode-back" href="../../api/index.html#litestar_permissions.PermissionResolver.can">[docs]</a>
-</span><span data-line="28">    <span class="k">def</span><span class="w"> </span><span class="nf">can</span><span class="p">(</span>
-</span><span data-line="29">        <span class="bp">self</span><span class="p">,</span>
-</span><span data-line="30">        <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
-</span><span data-line="31">        <span class="n">permission</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span data-line="32">        <span class="n">resource_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="33">        <span class="n">resource_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="34">        <span class="o">*</span><span class="p">,</span>
-</span><span data-line="35">        <span class="n">db</span><span class="p">:</span> <span class="n">Session</span><span class="p">,</span>
-</span><span data-line="36">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span data-line="37"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if user has the given permission, optionally scoped to a resource.&quot;&quot;&quot;</span>
-</span><span data-line="38">        <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">permission</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">resource_type</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">resource_id</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span data-line="39">
-</span><span data-line="40">        <span class="c1"># Check cache</span>
-</span><span data-line="41">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_ttl</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span data-line="42">            <span class="n">cached</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
-</span><span data-line="43">            <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="44">                <span class="n">result</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">cached</span>
-</span><span data-line="45">                <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">ts</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_ttl</span><span class="p">:</span>
-</span><span data-line="46">                    <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
-</span><span data-line="47">                    <span class="k">return</span> <span class="n">result</span>
-</span><span data-line="48">                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span>
-</span><span data-line="49">
-</span><span data-line="50">        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">,</span> <span class="n">resource_id</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">)</span>
-</span><span data-line="51">
-</span><span data-line="52">        <span class="c1"># Store in cache</span>
-</span><span data-line="53">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_ttl</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span data-line="54">            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">())</span>
-</span><span data-line="55">            <span class="c1"># LRU eviction</span>
-</span><span data-line="56">            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_max_size</span><span class="p">:</span>
-</span><span data-line="57">                <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-</span><span data-line="58">
-</span><span data-line="59">        <span class="k">return</span> <span class="n">result</span></div>
+</span><span data-line="29">    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">can</span><span class="p">(</span>
+</span><span data-line="30">        <span class="bp">self</span><span class="p">,</span>
+</span><span data-line="31">        <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+</span><span data-line="32">        <span class="n">permission</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span data-line="33">        <span class="n">resource_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="34">        <span class="n">resource_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="35">        <span class="o">*</span><span class="p">,</span>
+</span><span data-line="36">        <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
+</span><span data-line="37">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span data-line="38"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if user has the given permission, optionally scoped to a resource.&quot;&quot;&quot;</span>
+</span><span data-line="39">        <span class="n">cache_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">permission</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">resource_type</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">resource_id</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span data-line="40">
+</span><span data-line="41">        <span class="c1"># Check cache</span>
+</span><span data-line="42">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_ttl</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span data-line="43">            <span class="n">cached</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+</span><span data-line="44">            <span class="k">if</span> <span class="n">cached</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="45">                <span class="n">result</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">cached</span>
+</span><span data-line="46">                <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="n">ts</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_ttl</span><span class="p">:</span>
+</span><span data-line="47">                    <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">move_to_end</span><span class="p">(</span><span class="n">cache_key</span><span class="p">)</span>
+</span><span data-line="48">                    <span class="k">return</span> <span class="n">result</span>
+</span><span data-line="49">                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span>
+</span><span data-line="50">
+</span><span data-line="51">        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">permission</span><span class="p">,</span> <span class="n">resource_type</span><span class="p">,</span> <span class="n">resource_id</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">)</span>
+</span><span data-line="52">
+</span><span data-line="53">        <span class="c1"># Store in cache</span>
+</span><span data-line="54">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_ttl</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span data-line="55">            <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">cache_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">())</span>
+</span><span data-line="56">            <span class="c1"># LRU eviction</span>
+</span><span data-line="57">            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">cache_max_size</span><span class="p">:</span>
+</span><span data-line="58">                <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">popitem</span><span class="p">(</span><span class="n">last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span data-line="59">
+</span><span data-line="60">        <span class="k">return</span> <span class="n">result</span></div>
 
-</span><span data-line="60">
-</span><span data-line="61">    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span>
-</span><span data-line="62">        <span class="bp">self</span><span class="p">,</span>
-</span><span data-line="63">        <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
-</span><span data-line="64">        <span class="n">permission</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span data-line="65">        <span class="n">resource_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="66">        <span class="n">resource_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="67">        <span class="o">*</span><span class="p">,</span>
-</span><span data-line="68">        <span class="n">db</span><span class="p">:</span> <span class="n">Session</span><span class="p">,</span>
-</span><span data-line="69">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span data-line="70"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Core resolution logic.&quot;&quot;&quot;</span>
-</span><span data-line="71">        <span class="n">role_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Role&quot;</span><span class="p">]</span>
-</span><span data-line="72">        <span class="n">permission_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Permission&quot;</span><span class="p">]</span>
-</span><span data-line="73">        <span class="n">role_permission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;RolePermission&quot;</span><span class="p">]</span>
-</span><span data-line="74">        <span class="n">user_role_assignment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;UserRoleAssignment&quot;</span><span class="p">]</span>
-</span><span data-line="75">
-</span><span data-line="76">        <span class="c1"># Build the set of resource scopes to check (including ancestors)</span>
-</span><span data-line="77">        <span class="n">scopes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>  <span class="c1"># global</span>
-</span><span data-line="78">        <span class="k">if</span> <span class="n">resource_type</span> <span class="ow">and</span> <span class="n">resource_id</span><span class="p">:</span>
-</span><span data-line="79">            <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">resource_id</span><span class="p">))</span>
-</span><span data-line="80">            <span class="c1"># Walk up the hierarchy</span>
-</span><span data-line="81">            <span class="n">current_type</span> <span class="o">=</span> <span class="n">resource_type</span>
-</span><span data-line="82">            <span class="n">current_id</span> <span class="o">=</span> <span class="n">resource_id</span>
-</span><span data-line="83">            <span class="k">while</span> <span class="n">current_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">:</span>
-</span><span data-line="84">                <span class="n">parent_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">[</span><span class="n">current_type</span><span class="p">]</span>
-</span><span data-line="85">                <span class="c1"># Resolve parent ID via the resource_resolver callback</span>
-</span><span data-line="86">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">:</span>
-</span><span data-line="87">                    <span class="n">parent_resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">(</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
-</span><span data-line="88">                    <span class="k">if</span> <span class="n">parent_resource</span> <span class="ow">and</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
-</span><span data-line="89">                        <span class="n">current_type</span> <span class="o">=</span> <span class="n">parent_type</span>
-</span><span data-line="90">                        <span class="n">current_id</span> <span class="o">=</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span>
-</span><span data-line="91">                        <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">))</span>
-</span><span data-line="92">                    <span class="k">else</span><span class="p">:</span>
-</span><span data-line="93">                        <span class="k">break</span>
-</span><span data-line="94">                <span class="k">else</span><span class="p">:</span>
-</span><span data-line="95">                    <span class="k">break</span>
-</span><span data-line="96">
-</span><span data-line="97">        <span class="c1"># Query: does user have ANY role at ANY of these scopes</span>
-</span><span data-line="98">        <span class="c1"># that includes the requested permission?</span>
-</span><span data-line="99">        <span class="n">stmt</span> <span class="o">=</span> <span class="p">(</span>
-</span><span data-line="100">            <span class="n">select</span><span class="p">(</span><span class="n">permission_model</span><span class="o">.</span><span class="n">codename</span><span class="p">)</span>
-</span><span data-line="101">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_permission</span><span class="p">,</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">permission_id</span> <span class="o">==</span> <span class="n">permission_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</span><span data-line="102">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_model</span><span class="p">,</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">role_id</span><span class="p">)</span>
-</span><span data-line="103">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">role_id</span> <span class="o">==</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</span><span data-line="104">            <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span>
-</span><span data-line="105">            <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">permission_model</span><span class="o">.</span><span class="n">codename</span> <span class="o">==</span> <span class="n">permission</span><span class="p">)</span>
-</span><span data-line="106">        <span class="p">)</span>
-</span><span data-line="107">
-</span><span data-line="108">        <span class="c1"># Filter by scopes</span>
-</span><span data-line="109">        <span class="n">scope_filters</span> <span class="o">=</span> <span class="n">_build_scope_filters</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">scopes</span><span class="p">)</span>
-</span><span data-line="110">
-</span><span data-line="111">        <span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span><span class="o">*</span><span class="n">scope_filters</span><span class="p">))</span>
-</span><span data-line="112">        <span class="n">result</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
-</span><span data-line="113">        <span class="k">return</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-</span><span data-line="114">
+</span><span data-line="61">
+</span><span data-line="62">    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_resolve</span><span class="p">(</span>
+</span><span data-line="63">        <span class="bp">self</span><span class="p">,</span>
+</span><span data-line="64">        <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+</span><span data-line="65">        <span class="n">permission</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span data-line="66">        <span class="n">resource_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="67">        <span class="n">resource_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="68">        <span class="o">*</span><span class="p">,</span>
+</span><span data-line="69">        <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
+</span><span data-line="70">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span data-line="71"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Core resolution logic.&quot;&quot;&quot;</span>
+</span><span data-line="72">        <span class="n">role_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Role&quot;</span><span class="p">]</span>
+</span><span data-line="73">        <span class="n">permission_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Permission&quot;</span><span class="p">]</span>
+</span><span data-line="74">        <span class="n">role_permission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;RolePermission&quot;</span><span class="p">]</span>
+</span><span data-line="75">        <span class="n">user_role_assignment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;UserRoleAssignment&quot;</span><span class="p">]</span>
+</span><span data-line="76">
+</span><span data-line="77">        <span class="c1"># Build the set of resource scopes to check (including ancestors)</span>
+</span><span data-line="78">        <span class="n">scopes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>  <span class="c1"># global</span>
+</span><span data-line="79">        <span class="k">if</span> <span class="n">resource_type</span> <span class="ow">and</span> <span class="n">resource_id</span><span class="p">:</span>
+</span><span data-line="80">            <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">resource_id</span><span class="p">))</span>
+</span><span data-line="81">            <span class="c1"># Walk up the hierarchy</span>
+</span><span data-line="82">            <span class="n">current_type</span> <span class="o">=</span> <span class="n">resource_type</span>
+</span><span data-line="83">            <span class="n">current_id</span> <span class="o">=</span> <span class="n">resource_id</span>
+</span><span data-line="84">            <span class="k">while</span> <span class="n">current_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">:</span>
+</span><span data-line="85">                <span class="n">parent_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">[</span><span class="n">current_type</span><span class="p">]</span>
+</span><span data-line="86">                <span class="c1"># Resolve parent ID via the resource_resolver callback</span>
+</span><span data-line="87">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">:</span>
+</span><span data-line="88">                    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">(</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+</span><span data-line="89">                    <span class="c1"># Support both sync and async resource resolvers</span>
+</span><span data-line="90">                    <span class="k">if</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">iscoroutine</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+</span><span data-line="91">                        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">result</span>
+</span><span data-line="92">                    <span class="n">parent_resource</span> <span class="o">=</span> <span class="n">result</span>
+</span><span data-line="93">                    <span class="k">if</span> <span class="n">parent_resource</span> <span class="ow">and</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
+</span><span data-line="94">                        <span class="n">current_type</span> <span class="o">=</span> <span class="n">parent_type</span>
+</span><span data-line="95">                        <span class="n">current_id</span> <span class="o">=</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span>
+</span><span data-line="96">                        <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">))</span>
+</span><span data-line="97">                    <span class="k">else</span><span class="p">:</span>
+</span><span data-line="98">                        <span class="k">break</span>
+</span><span data-line="99">                <span class="k">else</span><span class="p">:</span>
+</span><span data-line="100">                    <span class="k">break</span>
+</span><span data-line="101">
+</span><span data-line="102">        <span class="c1"># Query: does user have ANY role at ANY of these scopes</span>
+</span><span data-line="103">        <span class="c1"># that includes the requested permission?</span>
+</span><span data-line="104">        <span class="n">stmt</span> <span class="o">=</span> <span class="p">(</span>
+</span><span data-line="105">            <span class="n">select</span><span class="p">(</span><span class="n">permission_model</span><span class="o">.</span><span class="n">codename</span><span class="p">)</span>
+</span><span data-line="106">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_permission</span><span class="p">,</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">permission_id</span> <span class="o">==</span> <span class="n">permission_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span data-line="107">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_model</span><span class="p">,</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">role_id</span><span class="p">)</span>
+</span><span data-line="108">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">role_id</span> <span class="o">==</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span data-line="109">            <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span>
+</span><span data-line="110">            <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">permission_model</span><span class="o">.</span><span class="n">codename</span> <span class="o">==</span> <span class="n">permission</span><span class="p">)</span>
+</span><span data-line="111">        <span class="p">)</span>
+</span><span data-line="112">
+</span><span data-line="113">        <span class="c1"># Filter by scopes</span>
+</span><span data-line="114">        <span class="n">scope_filters</span> <span class="o">=</span> <span class="n">_build_scope_filters</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">scopes</span><span class="p">)</span>
+</span><span data-line="115">
+</span><span data-line="116">        <span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span><span class="o">*</span><span class="n">scope_filters</span><span class="p">))</span>
+</span><span data-line="117">        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+</span><span data-line="118">        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</span><span data-line="119">
 <div class="viewcode-block" id="PermissionResolver.get_user_permissions">
 <a class="viewcode-back" href="../../api/index.html#litestar_permissions.PermissionResolver.get_user_permissions">[docs]</a>
-</span><span data-line="115">    <span class="k">def</span><span class="w"> </span><span class="nf">get_user_permissions</span><span class="p">(</span>
-</span><span data-line="116">        <span class="bp">self</span><span class="p">,</span>
-</span><span data-line="117">        <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
-</span><span data-line="118">        <span class="n">resource_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="119">        <span class="n">resource_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span data-line="120">        <span class="o">*</span><span class="p">,</span>
-</span><span data-line="121">        <span class="n">db</span><span class="p">:</span> <span class="n">Session</span><span class="p">,</span>
-</span><span data-line="122">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-</span><span data-line="123"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all permission codenames a user has at the given scope (+ ancestors).&quot;&quot;&quot;</span>
-</span><span data-line="124">        <span class="n">role_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Role&quot;</span><span class="p">]</span>
-</span><span data-line="125">        <span class="n">permission_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Permission&quot;</span><span class="p">]</span>
-</span><span data-line="126">        <span class="n">role_permission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;RolePermission&quot;</span><span class="p">]</span>
-</span><span data-line="127">        <span class="n">user_role_assignment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;UserRoleAssignment&quot;</span><span class="p">]</span>
-</span><span data-line="128">
-</span><span data-line="129">        <span class="n">scopes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
-</span><span data-line="130">        <span class="k">if</span> <span class="n">resource_type</span> <span class="ow">and</span> <span class="n">resource_id</span><span class="p">:</span>
-</span><span data-line="131">            <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">resource_id</span><span class="p">))</span>
-</span><span data-line="132">            <span class="n">current_type</span> <span class="o">=</span> <span class="n">resource_type</span>
-</span><span data-line="133">            <span class="n">current_id</span> <span class="o">=</span> <span class="n">resource_id</span>
-</span><span data-line="134">            <span class="k">while</span> <span class="n">current_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">:</span>
-</span><span data-line="135">                <span class="n">parent_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">[</span><span class="n">current_type</span><span class="p">]</span>
-</span><span data-line="136">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">:</span>
-</span><span data-line="137">                    <span class="n">parent_resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">(</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
-</span><span data-line="138">                    <span class="k">if</span> <span class="n">parent_resource</span> <span class="ow">and</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
-</span><span data-line="139">                        <span class="n">current_type</span> <span class="o">=</span> <span class="n">parent_type</span>
-</span><span data-line="140">                        <span class="n">current_id</span> <span class="o">=</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span>
-</span><span data-line="141">                        <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">))</span>
-</span><span data-line="142">                    <span class="k">else</span><span class="p">:</span>
-</span><span data-line="143">                        <span class="k">break</span>
-</span><span data-line="144">                <span class="k">else</span><span class="p">:</span>
-</span><span data-line="145">                    <span class="k">break</span>
-</span><span data-line="146">
-</span><span data-line="147">        <span class="n">stmt</span> <span class="o">=</span> <span class="p">(</span>
-</span><span data-line="148">            <span class="n">select</span><span class="p">(</span><span class="n">permission_model</span><span class="o">.</span><span class="n">codename</span><span class="p">)</span>
-</span><span data-line="149">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_permission</span><span class="p">,</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">permission_id</span> <span class="o">==</span> <span class="n">permission_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</span><span data-line="150">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_model</span><span class="p">,</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">role_id</span><span class="p">)</span>
-</span><span data-line="151">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">role_id</span> <span class="o">==</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
-</span><span data-line="152">            <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span>
-</span><span data-line="153">        <span class="p">)</span>
-</span><span data-line="154">
-</span><span data-line="155">        <span class="n">scope_filters</span> <span class="o">=</span> <span class="n">_build_scope_filters</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">scopes</span><span class="p">)</span>
-</span><span data-line="156">
-</span><span data-line="157">        <span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span><span class="o">*</span><span class="n">scope_filters</span><span class="p">))</span>
-</span><span data-line="158">        <span class="n">rows</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-</span><span data-line="159">        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
+</span><span data-line="120">    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_user_permissions</span><span class="p">(</span>
+</span><span data-line="121">        <span class="bp">self</span><span class="p">,</span>
+</span><span data-line="122">        <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+</span><span data-line="123">        <span class="n">resource_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="124">        <span class="n">resource_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span data-line="125">        <span class="o">*</span><span class="p">,</span>
+</span><span data-line="126">        <span class="n">db</span><span class="p">:</span> <span class="n">AsyncSession</span><span class="p">,</span>
+</span><span data-line="127">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+</span><span data-line="128"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all permission codenames a user has at the given scope (+ ancestors).&quot;&quot;&quot;</span>
+</span><span data-line="129">        <span class="n">role_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Role&quot;</span><span class="p">]</span>
+</span><span data-line="130">        <span class="n">permission_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;Permission&quot;</span><span class="p">]</span>
+</span><span data-line="131">        <span class="n">role_permission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;RolePermission&quot;</span><span class="p">]</span>
+</span><span data-line="132">        <span class="n">user_role_assignment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;UserRoleAssignment&quot;</span><span class="p">]</span>
+</span><span data-line="133">
+</span><span data-line="134">        <span class="n">scopes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
+</span><span data-line="135">        <span class="k">if</span> <span class="n">resource_type</span> <span class="ow">and</span> <span class="n">resource_id</span><span class="p">:</span>
+</span><span data-line="136">            <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">resource_type</span><span class="p">,</span> <span class="n">resource_id</span><span class="p">))</span>
+</span><span data-line="137">            <span class="n">current_type</span> <span class="o">=</span> <span class="n">resource_type</span>
+</span><span data-line="138">            <span class="n">current_id</span> <span class="o">=</span> <span class="n">resource_id</span>
+</span><span data-line="139">            <span class="k">while</span> <span class="n">current_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">:</span>
+</span><span data-line="140">                <span class="n">parent_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hierarchy</span><span class="p">[</span><span class="n">current_type</span><span class="p">]</span>
+</span><span data-line="141">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">:</span>
+</span><span data-line="142">                    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">resource_resolver</span><span class="p">(</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">,</span> <span class="n">db</span><span class="p">)</span>
+</span><span data-line="143">                    <span class="c1"># Support both sync and async resource resolvers</span>
+</span><span data-line="144">                    <span class="k">if</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">iscoroutine</span><span class="p">(</span><span class="n">result</span><span class="p">):</span>
+</span><span data-line="145">                        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">result</span>
+</span><span data-line="146">                    <span class="n">parent_resource</span> <span class="o">=</span> <span class="n">result</span>
+</span><span data-line="147">                    <span class="k">if</span> <span class="n">parent_resource</span> <span class="ow">and</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
+</span><span data-line="148">                        <span class="n">current_type</span> <span class="o">=</span> <span class="n">parent_type</span>
+</span><span data-line="149">                        <span class="n">current_id</span> <span class="o">=</span> <span class="n">parent_resource</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">id</span>
+</span><span data-line="150">                        <span class="n">scopes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">current_type</span><span class="p">,</span> <span class="n">current_id</span><span class="p">))</span>
+</span><span data-line="151">                    <span class="k">else</span><span class="p">:</span>
+</span><span data-line="152">                        <span class="k">break</span>
+</span><span data-line="153">                <span class="k">else</span><span class="p">:</span>
+</span><span data-line="154">                    <span class="k">break</span>
+</span><span data-line="155">
+</span><span data-line="156">        <span class="n">stmt</span> <span class="o">=</span> <span class="p">(</span>
+</span><span data-line="157">            <span class="n">select</span><span class="p">(</span><span class="n">permission_model</span><span class="o">.</span><span class="n">codename</span><span class="p">)</span>
+</span><span data-line="158">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_permission</span><span class="p">,</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">permission_id</span> <span class="o">==</span> <span class="n">permission_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span data-line="159">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">role_model</span><span class="p">,</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">role_permission</span><span class="o">.</span><span class="n">role_id</span><span class="p">)</span>
+</span><span data-line="160">            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">role_id</span> <span class="o">==</span> <span class="n">role_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+</span><span data-line="161">            <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="o">.</span><span class="n">user_id</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span>
+</span><span data-line="162">        <span class="p">)</span>
+</span><span data-line="163">
+</span><span data-line="164">        <span class="n">scope_filters</span> <span class="o">=</span> <span class="n">_build_scope_filters</span><span class="p">(</span><span class="n">user_role_assignment</span><span class="p">,</span> <span class="n">scopes</span><span class="p">)</span>
+</span><span data-line="165">
+</span><span data-line="166">        <span class="n">stmt</span> <span class="o">=</span> <span class="n">stmt</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">or_</span><span class="p">(</span><span class="o">*</span><span class="n">scope_filters</span><span class="p">))</span>
+</span><span data-line="167">        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+</span><span data-line="168">        <span class="n">rows</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</span><span data-line="169">        <span class="k">return</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">}</span></div>
 
-</span><span data-line="160">
+</span><span data-line="170">
 <div class="viewcode-block" id="PermissionResolver.invalidate_user">
 <a class="viewcode-back" href="../../api/index.html#litestar_permissions.PermissionResolver.invalidate_user">[docs]</a>
-</span><span data-line="161">    <span class="k">def</span><span class="w"> </span><span class="nf">invalidate_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="162"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove all cached entries for a user.&quot;&quot;&quot;</span>
-</span><span data-line="163">        <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">:&quot;</span>
-</span><span data-line="164">        <span class="n">keys_to_remove</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
-</span><span data-line="165">        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys_to_remove</span><span class="p">:</span>
-</span><span data-line="166">            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">k</span><span class="p">]</span></div>
+</span><span data-line="171">    <span class="k">def</span><span class="w"> </span><span class="nf">invalidate_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="172"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove all cached entries for a user.&quot;&quot;&quot;</span>
+</span><span data-line="173">        <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2">:&quot;</span>
+</span><span data-line="174">        <span class="n">keys_to_remove</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">)]</span>
+</span><span data-line="175">        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys_to_remove</span><span class="p">:</span>
+</span><span data-line="176">            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">k</span><span class="p">]</span></div>
 
-</span><span data-line="167">
+</span><span data-line="177">
 <div class="viewcode-block" id="PermissionResolver.invalidate_all">
 <a class="viewcode-back" href="../../api/index.html#litestar_permissions.PermissionResolver.invalidate_all">[docs]</a>
-</span><span data-line="168">    <span class="k">def</span><span class="w"> </span><span class="nf">invalidate_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="169"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the entire cache.&quot;&quot;&quot;</span>
-</span><span data-line="170">        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+</span><span data-line="178">    <span class="k">def</span><span class="w"> </span><span class="nf">invalidate_all</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="179"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the entire cache.&quot;&quot;&quot;</span>
+</span><span data-line="180">        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 </div>
 
-</span><span data-line="171">
-</span><span data-line="172">
-</span><span data-line="173"><span class="k">def</span><span class="w"> </span><span class="nf">_build_scope_filters</span><span class="p">(</span>
-</span><span data-line="174">    <span class="n">user_role_assignment</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
-</span><span data-line="175">    <span class="n">scopes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span>
-</span><span data-line="176"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
-</span><span data-line="177"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Build SQLAlchemy scope filter clauses for the given scopes.&quot;&quot;&quot;</span>
-</span><span data-line="178">    <span class="n">scope_filters</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span data-line="179">    <span class="k">for</span> <span class="n">scope_type</span><span class="p">,</span> <span class="n">scope_id</span> <span class="ow">in</span> <span class="n">scopes</span><span class="p">:</span>
-</span><span data-line="180">        <span class="k">if</span> <span class="n">scope_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="181">            <span class="n">scope_filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span data-line="182">                <span class="n">and_</span><span class="p">(</span>
-</span><span data-line="183">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_type</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span>
-</span><span data-line="184">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_id</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span>
-</span><span data-line="185">                <span class="p">)</span>
-</span><span data-line="186">            <span class="p">)</span>
-</span><span data-line="187">        <span class="k">else</span><span class="p">:</span>
-</span><span data-line="188">            <span class="n">scope_filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-</span><span data-line="189">                <span class="n">and_</span><span class="p">(</span>
-</span><span data-line="190">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_type</span> <span class="o">==</span> <span class="n">scope_type</span><span class="p">,</span>
-</span><span data-line="191">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_id</span> <span class="o">==</span> <span class="n">scope_id</span><span class="p">,</span>
-</span><span data-line="192">                <span class="p">)</span>
-</span><span data-line="193">            <span class="p">)</span>
-</span><span data-line="194">    <span class="k">return</span> <span class="n">scope_filters</span>
+</span><span data-line="181">
+</span><span data-line="182">
+</span><span data-line="183"><span class="k">def</span><span class="w"> </span><span class="nf">_build_scope_filters</span><span class="p">(</span>
+</span><span data-line="184">    <span class="n">user_role_assignment</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+</span><span data-line="185">    <span class="n">scopes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">UUID</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]],</span>
+</span><span data-line="186"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+</span><span data-line="187"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Build SQLAlchemy scope filter clauses for the given scopes.&quot;&quot;&quot;</span>
+</span><span data-line="188">    <span class="n">scope_filters</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span data-line="189">    <span class="k">for</span> <span class="n">scope_type</span><span class="p">,</span> <span class="n">scope_id</span> <span class="ow">in</span> <span class="n">scopes</span><span class="p">:</span>
+</span><span data-line="190">        <span class="k">if</span> <span class="n">scope_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="191">            <span class="n">scope_filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span data-line="192">                <span class="n">and_</span><span class="p">(</span>
+</span><span data-line="193">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_type</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span>
+</span><span data-line="194">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_id</span><span class="o">.</span><span class="n">is_</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span>
+</span><span data-line="195">                <span class="p">)</span>
+</span><span data-line="196">            <span class="p">)</span>
+</span><span data-line="197">        <span class="k">else</span><span class="p">:</span>
+</span><span data-line="198">            <span class="n">scope_filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span data-line="199">                <span class="n">and_</span><span class="p">(</span>
+</span><span data-line="200">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_type</span> <span class="o">==</span> <span class="n">scope_type</span><span class="p">,</span>
+</span><span data-line="201">                    <span class="n">user_role_assignment</span><span class="o">.</span><span class="n">resource_id</span> <span class="o">==</span> <span class="n">scope_id</span><span class="p">,</span>
+</span><span data-line="202">                <span class="p">)</span>
+</span><span data-line="203">            <span class="p">)</span>
+</span><span data-line="204">    <span class="k">return</span> <span class="n">scope_filters</span>
 </span></pre></div>
         </article><button class="back-to-top" type="button">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
