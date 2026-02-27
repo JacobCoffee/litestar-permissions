@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from litestar.plugins import InitPluginProtocol
@@ -14,7 +16,8 @@ if TYPE_CHECKING:
 class PermissionsPlugin(InitPluginProtocol):
     """Litestar plugin for fine-grained hierarchical RBAC.
 
-    Usage:
+    Example::
+
         from litestar_permissions import PermissionsPlugin, PermissionsConfig
 
         config = PermissionsConfig(

@@ -40,5 +40,8 @@ htmlcov/
 .claude-flow/
 .hive-mind/
 
+## Worktrees
+.worktrees/
+
 ## Project
 *.db
