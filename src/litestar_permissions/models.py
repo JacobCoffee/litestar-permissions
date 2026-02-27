@@ -38,6 +38,13 @@ def create_models(base: type[DeclarativeBase], table_prefix: str = "", class_pre
     Returns dict with keys: 'Role', 'Permission', 'RolePermission', 'UserRoleAssignment'
     """
 
+    # Lightweight base sharing registry + metadata but without UUIDPrimaryKey/SentinelMixin.
+    # Used for join tables that need a composite PK, not an auto-generated id column.
+    class _JoinBase(DeclarativeBase):
+        __abstract__ = True
+        registry = base.registry
+        metadata = base.metadata
+
     class Permission(base):
         """A granular action like 'application:deploy' or 'config:write'."""
 
@@ -73,7 +80,7 @@ def create_models(base: type[DeclarativeBase], table_prefix: str = "", class_pre
         def __repr__(self) -> str:
             return f"<Role {self.name}>"
 
-    class RolePermission(base):
+    class RolePermission(_JoinBase):
         """Many-to-many: which permissions belong to which role."""
 
         __tablename__ = f"{table_prefix}role_permissions"
