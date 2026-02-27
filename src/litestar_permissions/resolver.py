@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import time
 from collections import OrderedDict
 from typing import TYPE_CHECKING
@@ -8,7 +9,7 @@ from uuid import UUID
 from sqlalchemy import and_, or_, select
 
 if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     from litestar_permissions.config import PermissionsConfig
 
@@ -25,14 +26,14 @@ class PermissionResolver:
         self.models = models
         self._cache: OrderedDict[str, tuple[bool, float]] = OrderedDict()
 
-    def can(
+    async def can(
         self,
         user_id: UUID | str,
         permission: str,
         resource_type: str | None = None,
         resource_id: UUID | str | None = None,
         *,
-        db: Session,
+        db: AsyncSession,
     ) -> bool:
         """Check if user has the given permission, optionally scoped to a resource."""
         cache_key = f"{user_id}:{permission}:{resource_type}:{resource_id}"
@@ -47,7 +48,7 @@ class PermissionResolver:
                     return result
                 del self._cache[cache_key]
 
-        result = self._resolve(user_id, permission, resource_type, resource_id, db=db)
+        result = await self._resolve(user_id, permission, resource_type, resource_id, db=db)
 
         # Store in cache
         if self.config.cache_ttl > 0:
@@ -58,14 +59,14 @@ class PermissionResolver:
 
         return result
 
-    def _resolve(
+    async def _resolve(
         self,
         user_id: UUID | str,
         permission: str,
         resource_type: str | None,
         resource_id: UUID | str | None,
         *,
-        db: Session,
+        db: AsyncSession,
     ) -> bool:
         """Core resolution logic."""
         role_model = self.models["Role"]
@@ -84,7 +85,11 @@ class PermissionResolver:
                 parent_type = self.config.hierarchy[current_type]
                 # Resolve parent ID via the resource_resolver callback
                 if self.config.resource_resolver:
-                    parent_resource = self.config.resource_resolver(current_type, current_id, db)
+                    result = self.config.resource_resolver(current_type, current_id, db)
+                    # Support both sync and async resource resolvers
+                    if asyncio.iscoroutine(result):
+                        result = await result
+                    parent_resource = result
                     if parent_resource and parent_resource.parent:
                         current_type = parent_type
                         current_id = parent_resource.parent.id
@@ -109,16 +114,16 @@ class PermissionResolver:
         scope_filters = _build_scope_filters(user_role_assignment, scopes)
 
         stmt = stmt.where(or_(*scope_filters))
-        result = db.execute(stmt).first()
-        return result is not None
+        result = await db.execute(stmt)
+        return result.first() is not None
 
-    def get_user_permissions(
+    async def get_user_permissions(
         self,
         user_id: UUID | str,
         resource_type: str | None = None,
         resource_id: UUID | str | None = None,
         *,
-        db: Session,
+        db: AsyncSession,
     ) -> set[str]:
         """Get all permission codenames a user has at the given scope (+ ancestors)."""
         role_model = self.models["Role"]
@@ -134,7 +139,11 @@ class PermissionResolver:
             while current_type in self.config.hierarchy:
                 parent_type = self.config.hierarchy[current_type]
                 if self.config.resource_resolver:
-                    parent_resource = self.config.resource_resolver(current_type, current_id, db)
+                    result = self.config.resource_resolver(current_type, current_id, db)
+                    # Support both sync and async resource resolvers
+                    if asyncio.iscoroutine(result):
+                        result = await result
+                    parent_resource = result
                     if parent_resource and parent_resource.parent:
                         current_type = parent_type
                         current_id = parent_resource.parent.id
@@ -155,7 +164,8 @@ class PermissionResolver:
         scope_filters = _build_scope_filters(user_role_assignment, scopes)
 
         stmt = stmt.where(or_(*scope_filters))
-        rows = db.execute(stmt).all()
+        result = await db.execute(stmt)
+        rows = result.all()
         return {row[0] for row in rows}
 
     def invalidate_user(self, user_id: UUID | str) -> None:

@@ -1,6 +1,6 @@
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
 
 from litestar_permissions.models import create_models
 
@@ -14,19 +14,18 @@ _rbac_models = create_models(Base)
 
 
 @pytest.fixture
-def db_engine():
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
+async def db_engine():
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield engine
-    engine.dispose()
+    await engine.dispose()
 
 
 @pytest.fixture
-def db_session(db_engine):
-    session_factory = sessionmaker(bind=db_engine)
-    session = session_factory()
-    yield session
-    session.close()
+async def db_session(db_engine):
+    async with AsyncSession(db_engine, expire_on_commit=False) as session:
+        yield session
 
 
 @pytest.fixture

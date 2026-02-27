@@ -20,8 +20,9 @@ class PermissionsConfig:
     # e.g. {"application": "project", "project": "organization"}
     hierarchy: dict[str, str] = field(default_factory=dict)
 
-    # Custom function to resolve a resource from request path params.
-    # Signature: (resource_type: str, resource_id: str, db_session) -> ResourceProtocol | None
+    # Async callback to resolve a resource from request path params.
+    # Signature: async (resource_type: str, resource_id: str, db: AsyncSession) -> ResourceProtocol | None
+    # Sync callables are also accepted (will be detected at call time).
     resource_resolver: Callable[..., Any] | None = None
 
     # User attribute on the request scope to read the current user from

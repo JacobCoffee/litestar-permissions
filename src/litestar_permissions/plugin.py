@@ -16,6 +16,11 @@ if TYPE_CHECKING:
 class PermissionsPlugin(InitPluginProtocol):
     """Litestar plugin for fine-grained hierarchical RBAC.
 
+    Note:
+        Consumers must populate ``scope["db_session"]`` with a per-request
+        ``AsyncSession`` for guards and middleware to function. This is typically
+        done via middleware or a dependency that writes to the ASGI scope.
+
     Example::
 
         from litestar_permissions import PermissionsPlugin, PermissionsConfig

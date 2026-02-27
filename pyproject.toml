@@ -22,6 +22,8 @@ lint = [
   "ty>=0.0.1a27",
 ]
 test = [
+  "aiosqlite>=0.20.0",
+  "greenlet>=3.0.0",
   "pytest>=8.1.1",
   "pytest-asyncio>=0.23.6",
   "pytest-cov>=4.1.0",
