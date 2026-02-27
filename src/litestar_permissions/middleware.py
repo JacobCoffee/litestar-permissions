@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from litestar.middleware import AbstractMiddleware
 from litestar.types import Receive, Scope, Send
 
@@ -5,7 +7,7 @@ from litestar.types import Receive, Scope, Send
 class PermissionsMiddleware(AbstractMiddleware):
     """Injects the user's resolved permissions into request scope for template use."""
 
-    scopes = {"http"}
+    scopes: ClassVar[set[str]] = {"http"}
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         user = scope.get("user")

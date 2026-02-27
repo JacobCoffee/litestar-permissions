@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.abspath("../src"))
 
 project = "litestar-permissions"
-copyright = "2025, Jacob Coffee"  # noqa: A001
+copyright = "2025, Jacob Coffee"
 author = "Jacob Coffee"
 release = "0.1.0"
 
@@ -113,9 +113,7 @@ def setup(app: object) -> None:
     from docutils import nodes
     from docutils.parsers.rst import Directive, directives, roles
 
-    def paramref_role(
-        _name: str, _rawtext: str, text: str, _lineno: int, _inliner: object, **_: object
-    ) -> tuple:
+    def paramref_role(_name: str, _rawtext: str, text: str, _lineno: int, _inliner: object, **_: object) -> tuple:
         return [nodes.literal(text, text)], []
 
     roles.register_local_role("paramref", paramref_role)

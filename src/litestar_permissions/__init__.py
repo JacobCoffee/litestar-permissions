@@ -7,16 +7,16 @@ from litestar_permissions.protocols import ResourceProtocol, UserProtocol
 from litestar_permissions.resolver import PermissionResolver
 
 __all__ = [
-    "__version__",
     "Permission",
+    "PermissionResolver",
     "PermissionsConfig",
     "PermissionsPlugin",
-    "PermissionResolver",
-    "require_permission",
-    "require_role",
     "ResourceProtocol",
     "Role",
     "RolePermission",
     "UserProtocol",
     "UserRoleAssignment",
+    "__version__",
+    "require_permission",
+    "require_role",
 ]

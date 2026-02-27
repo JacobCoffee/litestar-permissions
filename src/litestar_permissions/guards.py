@@ -9,6 +9,10 @@ if TYPE_CHECKING:
     from litestar.handlers import BaseRouteHandler
 
 
+def _is_superuser(user: object) -> bool:
+    return getattr(user, "is_superuser", False) or getattr(user, "admin", False)
+
+
 def require_permission(
     *permissions: str,
     resource_type_param: str | None = None,
@@ -31,11 +35,9 @@ def require_permission(
         if user is None:
             raise NotAuthorizedException("Authentication required")
 
-        # Superuser bypass
         permissions_config = connection.app.state.get("permissions_config")
-        if permissions_config and permissions_config.superuser_bypass:
-            if getattr(user, "is_superuser", False) or getattr(user, "admin", False):
-                return
+        if permissions_config and permissions_config.superuser_bypass and _is_superuser(user):
+            return
 
         resolver = connection.app.state.get("permissions_resolver")
         if resolver is None:
@@ -45,27 +47,37 @@ def require_permission(
         if db is None:
             raise PermissionDeniedException("db_session not found in app state")
 
-        # Resolve resource scope from path params
-        resource_type = None
-        resource_id = None
-        if resource_id_param:
-            resource_id = connection.path_params.get(resource_id_param)
-            if resource_type_param:
-                resource_type = connection.path_params.get(resource_type_param)
-            # If no explicit type param, try to infer from the permissions config hierarchy
-            elif resource_id and permissions_config:
-                # Use the first permission's prefix as resource type hint
-                # e.g. "application:deploy" -> "application"
-                for perm in permissions:
-                    if ":" in perm:
-                        resource_type = perm.split(":")[0]
-                        break
+        resource_type, resource_id = _resolve_resource_scope(
+            connection, permissions, resource_type_param, resource_id_param, permissions_config
+        )
 
         for perm in permissions:
             if not resolver.can(user.id, perm, resource_type, resource_id, db=db):
                 raise PermissionDeniedException(f"Missing permission: {perm}")
 
     return guard
+
+
+def _resolve_resource_scope(
+    connection: ASGIConnection,
+    permissions: tuple[str, ...],
+    resource_type_param: str | None,
+    resource_id_param: str | None,
+    permissions_config: object | None,
+) -> tuple[str | None, str | None]:
+    """Extract resource type and ID from path params."""
+    resource_type = None
+    resource_id = None
+    if resource_id_param:
+        resource_id = connection.path_params.get(resource_id_param)
+        if resource_type_param:
+            resource_type = connection.path_params.get(resource_type_param)
+        elif resource_id and permissions_config:
+            for perm in permissions:
+                if ":" in perm:
+                    resource_type = perm.split(":")[0]
+                    break
+    return resource_type, resource_id
 
 
 def require_role(
@@ -87,9 +99,8 @@ def require_role(
             raise NotAuthorizedException("Authentication required")
 
         permissions_config = connection.app.state.get("permissions_config")
-        if permissions_config and permissions_config.superuser_bypass:
-            if getattr(user, "is_superuser", False) or getattr(user, "admin", False):
-                return
+        if permissions_config and permissions_config.superuser_bypass and _is_superuser(user):
+            return
 
         from sqlalchemy import and_, or_, select
 
@@ -101,8 +112,8 @@ def require_role(
         if not models:
             raise PermissionDeniedException("Permissions system not configured")
 
-        UserRoleAssignment = models["UserRoleAssignment"]
-        Role = models["Role"]
+        user_role_assignment = models["UserRoleAssignment"]
+        role_model = models["Role"]
 
         resource_type = None
         resource_id = None
@@ -112,23 +123,23 @@ def require_role(
                 resource_type = connection.path_params.get(resource_type_param)
 
         stmt = (
-            select(Role.name)
-            .join(UserRoleAssignment, UserRoleAssignment.role_id == Role.id)
-            .where(UserRoleAssignment.user_id == user.id)
-            .where(Role.name.in_(role_names))
+            select(role_model.name)
+            .join(user_role_assignment, user_role_assignment.role_id == role_model.id)
+            .where(user_role_assignment.user_id == user.id)
+            .where(role_model.name.in_(role_names))
         )
 
         scope_filters = [
             and_(
-                UserRoleAssignment.resource_type.is_(None),
-                UserRoleAssignment.resource_id.is_(None),
+                user_role_assignment.resource_type.is_(None),
+                user_role_assignment.resource_id.is_(None),
             )
         ]
         if resource_type and resource_id:
             scope_filters.append(
                 and_(
-                    UserRoleAssignment.resource_type == resource_type,
-                    UserRoleAssignment.resource_id == resource_id,
+                    user_role_assignment.resource_type == resource_type,
+                    user_role_assignment.resource_id == resource_id,
                 )
             )
 

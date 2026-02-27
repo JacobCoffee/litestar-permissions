@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Protocol, runtime_checkable
 from uuid import UUID
 
@@ -26,6 +28,6 @@ class ResourceProtocol(Protocol):
         ...
 
     @property
-    def parent(self) -> ResourceProtocol | None:  # noqa: F821
+    def parent(self) -> ResourceProtocol | None:
         """Parent resource for hierarchy traversal. None = top-level."""
         ...

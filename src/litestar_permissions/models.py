@@ -9,25 +9,17 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 class Role:
     """Named role that groups permissions. Use create_models() to get concrete ORM classes."""
 
-    pass
-
 
 class Permission:
     """A granular action like 'application:deploy'. Use create_models() to get concrete ORM classes."""
-
-    pass
 
 
 class RolePermission:
     """Many-to-many: which permissions belong to which role. Use create_models() to get concrete ORM classes."""
 
-    pass
-
 
 class UserRoleAssignment:
     """Assigns a role to a user, optionally scoped to a resource. Use create_models() to get concrete ORM classes."""
-
-    pass
 
 
 def create_models(base: type[DeclarativeBase], table_prefix: str = "") -> dict[str, type]:

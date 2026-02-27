@@ -6,9 +6,10 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Session
 
 if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+
     from litestar_permissions.config import PermissionsConfig
 
 
@@ -44,8 +45,7 @@ class PermissionResolver:
                 if time.monotonic() - ts < self.config.cache_ttl:
                     self._cache.move_to_end(cache_key)
                     return result
-                else:
-                    del self._cache[cache_key]
+                del self._cache[cache_key]
 
         result = self._resolve(user_id, permission, resource_type, resource_id, db=db)
 
@@ -68,10 +68,10 @@ class PermissionResolver:
         db: Session,
     ) -> bool:
         """Core resolution logic."""
-        Role = self.models["Role"]
-        Permission = self.models["Permission"]
-        RolePermission = self.models["RolePermission"]
-        UserRoleAssignment = self.models["UserRoleAssignment"]
+        role_model = self.models["Role"]
+        permission_model = self.models["Permission"]
+        role_permission = self.models["RolePermission"]
+        user_role_assignment = self.models["UserRoleAssignment"]
 
         # Build the set of resource scopes to check (including ancestors)
         scopes: list[tuple[str | None, UUID | str | None]] = [(None, None)]  # global
@@ -97,31 +97,16 @@ class PermissionResolver:
         # Query: does user have ANY role at ANY of these scopes
         # that includes the requested permission?
         stmt = (
-            select(Permission.codename)
-            .join(RolePermission, RolePermission.permission_id == Permission.id)
-            .join(Role, Role.id == RolePermission.role_id)
-            .join(UserRoleAssignment, UserRoleAssignment.role_id == Role.id)
-            .where(UserRoleAssignment.user_id == user_id)
-            .where(Permission.codename == permission)
+            select(permission_model.codename)
+            .join(role_permission, role_permission.permission_id == permission_model.id)
+            .join(role_model, role_model.id == role_permission.role_id)
+            .join(user_role_assignment, user_role_assignment.role_id == role_model.id)
+            .where(user_role_assignment.user_id == user_id)
+            .where(permission_model.codename == permission)
         )
 
         # Filter by scopes
-        scope_filters = []
-        for scope_type, scope_id in scopes:
-            if scope_type is None:
-                scope_filters.append(
-                    and_(
-                        UserRoleAssignment.resource_type.is_(None),
-                        UserRoleAssignment.resource_id.is_(None),
-                    )
-                )
-            else:
-                scope_filters.append(
-                    and_(
-                        UserRoleAssignment.resource_type == scope_type,
-                        UserRoleAssignment.resource_id == scope_id,
-                    )
-                )
+        scope_filters = _build_scope_filters(user_role_assignment, scopes)
 
         stmt = stmt.where(or_(*scope_filters))
         result = db.execute(stmt).first()
@@ -136,10 +121,10 @@ class PermissionResolver:
         db: Session,
     ) -> set[str]:
         """Get all permission codenames a user has at the given scope (+ ancestors)."""
-        Role = self.models["Role"]
-        Permission = self.models["Permission"]
-        RolePermission = self.models["RolePermission"]
-        UserRoleAssignment = self.models["UserRoleAssignment"]
+        role_model = self.models["Role"]
+        permission_model = self.models["Permission"]
+        role_permission = self.models["RolePermission"]
+        user_role_assignment = self.models["UserRoleAssignment"]
 
         scopes: list[tuple[str | None, UUID | str | None]] = [(None, None)]
         if resource_type and resource_id:
@@ -160,29 +145,14 @@ class PermissionResolver:
                     break
 
         stmt = (
-            select(Permission.codename)
-            .join(RolePermission, RolePermission.permission_id == Permission.id)
-            .join(Role, Role.id == RolePermission.role_id)
-            .join(UserRoleAssignment, UserRoleAssignment.role_id == Role.id)
-            .where(UserRoleAssignment.user_id == user_id)
+            select(permission_model.codename)
+            .join(role_permission, role_permission.permission_id == permission_model.id)
+            .join(role_model, role_model.id == role_permission.role_id)
+            .join(user_role_assignment, user_role_assignment.role_id == role_model.id)
+            .where(user_role_assignment.user_id == user_id)
         )
 
-        scope_filters = []
-        for scope_type, scope_id in scopes:
-            if scope_type is None:
-                scope_filters.append(
-                    and_(
-                        UserRoleAssignment.resource_type.is_(None),
-                        UserRoleAssignment.resource_id.is_(None),
-                    )
-                )
-            else:
-                scope_filters.append(
-                    and_(
-                        UserRoleAssignment.resource_type == scope_type,
-                        UserRoleAssignment.resource_id == scope_id,
-                    )
-                )
+        scope_filters = _build_scope_filters(user_role_assignment, scopes)
 
         stmt = stmt.where(or_(*scope_filters))
         rows = db.execute(stmt).all()
@@ -198,3 +168,27 @@ class PermissionResolver:
     def invalidate_all(self) -> None:
         """Clear the entire cache."""
         self._cache.clear()
+
+
+def _build_scope_filters(
+    user_role_assignment: type,
+    scopes: list[tuple[str | None, UUID | str | None]],
+) -> list:
+    """Build SQLAlchemy scope filter clauses for the given scopes."""
+    scope_filters = []
+    for scope_type, scope_id in scopes:
+        if scope_type is None:
+            scope_filters.append(
+                and_(
+                    user_role_assignment.resource_type.is_(None),
+                    user_role_assignment.resource_id.is_(None),
+                )
+            )
+        else:
+            scope_filters.append(
+                and_(
+                    user_role_assignment.resource_type == scope_type,
+                    user_role_assignment.resource_id == scope_id,
+                )
+            )
+    return scope_filters

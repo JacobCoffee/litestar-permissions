@@ -229,6 +229,7 @@ max-complexity = 12
 [tool.ruff.lint.per-file-ignores]
 "docs/conf.py" = [
   "A001",
+  "ARG001",
   "INP001",
   "PTH",
   "DTZ",
@@ -275,6 +276,12 @@ python = ".venv"
 
 [tool.ty.rules]
 deprecated = "warn"
+# Dynamic SQLAlchemy models from dict[str, type] and ASGI scope extensions
+# make these rules unsatisfiable without heavy casting
+possibly-missing-attribute = "ignore"
+unresolved-attribute = "ignore"
+invalid-key = "ignore"
+unsupported-base = "ignore"
 
 [tool.ty.src]
 exclude = ["docs/conf.py", "tests/"]
