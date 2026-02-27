@@ -10,6 +10,9 @@ class PermissionsConfig:
     # SQLAlchemy table prefix for RBAC tables (default: no prefix)
     table_prefix: str = ""
 
+    # Prefix for generated ORM class names to avoid registry conflicts (default: no prefix)
+    class_prefix: str = ""
+
     # Cache TTL for resolved permissions (seconds). 0 = no cache.
     cache_ttl: int = 300
 

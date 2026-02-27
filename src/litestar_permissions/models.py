@@ -24,8 +24,14 @@ class UserRoleAssignment:
     """Assigns a role to a user, optionally scoped to a resource. Use create_models() to get concrete ORM classes."""
 
 
-def create_models(base: type[DeclarativeBase], table_prefix: str = "") -> dict[str, type]:
+def create_models(base: type[DeclarativeBase], table_prefix: str = "", class_prefix: str = "") -> dict[str, type]:
     """Factory that creates concrete RBAC models bound to the app's Base.
+
+    Args:
+        base: The SQLAlchemy declarative base to bind models to.
+        table_prefix: Prefix for database table names.
+        class_prefix: Prefix for ORM class names to avoid registry conflicts
+            when the app already has models with the same names (e.g. ``Role``).
 
     Returns dict with keys: 'Role', 'Permission', 'RolePermission', 'UserRoleAssignment'
     """
@@ -107,6 +113,12 @@ def create_models(base: type[DeclarativeBase], table_prefix: str = "") -> dict[s
         def __repr__(self) -> str:
             scope = f"{self.resource_type}:{self.resource_id}" if self.resource_type else "global"
             return f"<UserRoleAssignment user={self.user_id} role={self.role_id} scope={scope}>"
+
+    if class_prefix:
+        for cls in (Permission, Role, RolePermission, UserRoleAssignment):
+            new_name = f"{class_prefix}{cls.__name__}"
+            cls.__name__ = new_name
+            cls.__qualname__ = f"create_models.<locals>.{new_name}"
 
     return {
         "Permission": Permission,

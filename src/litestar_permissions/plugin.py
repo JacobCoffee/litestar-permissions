@@ -38,15 +38,16 @@ class PermissionsPlugin(InitPluginProtocol):
         self,
         config: PermissionsConfig | None = None,
         base: type[DeclarativeBase] | None = None,
+        models: dict[str, type] | None = None,
     ) -> None:
         self.config = config or PermissionsConfig()
         self.base = base
-        self.models: dict[str, type] = {}
+        self.models: dict[str, type] = models or {}
         self.resolver: PermissionResolver | None = None
 
     def on_app_init(self, app_config: AppConfig) -> AppConfig:
-        if self.base is not None:
-            self.models = create_models(self.base, self.config.table_prefix)
+        if not self.models and self.base is not None:
+            self.models = create_models(self.base, self.config.table_prefix, self.config.class_prefix)
 
         self.resolver = PermissionResolver(config=self.config, models=self.models)
 
