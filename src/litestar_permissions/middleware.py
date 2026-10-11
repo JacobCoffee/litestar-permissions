@@ -1,7 +1,6 @@
-from typing import ClassVar
-
+from litestar.enums import ScopeType
 from litestar.middleware import AbstractMiddleware
-from litestar.types import Receive, Scope, Send
+from litestar.types import Receive, Scope, Scopes, Send
 
 
 class PermissionsMiddleware(AbstractMiddleware):
@@ -12,7 +11,7 @@ class PermissionsMiddleware(AbstractMiddleware):
         ``AsyncSession`` before this middleware runs (e.g. via an earlier middleware).
     """
 
-    scopes: ClassVar[set[str]] = {"http"}
+    scopes: Scopes = {ScopeType.HTTP}  # noqa: RUF012 -- matches AbstractMiddleware's own instance-attribute pattern
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         config = scope["app"].state.get("permissions_config")
