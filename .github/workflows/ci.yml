@@ -90,9 +90,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            python-version: "3.14"
+            python-version: "3.15"
           - os: windows-latest
-            python-version: "3.14"
+            python-version: "3.15"
           - os: ubuntu-latest
             python-version: "3.12"
     steps:
@@ -113,10 +113,12 @@ jobs:
           allow-prereleases: true
 
       - name: Install dependencies
-        run: uv sync --dev
+        # Scoped to the test group: sphinx-autobuild (docs group) pulls in
+        # watchfiles, which has no Python 3.15 wheel/PyO3 support yet.
+        run: uv sync --no-default-groups --group test
 
       - name: Run tests
-        run: uv run pytest tests/ -v
+        run: uv run --no-default-groups --group test pytest tests/ -v
 
   # ==================================================================================== #
   # FULL TEST MATRIX (remaining combinations, runs after smoke passes)
@@ -131,13 +133,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
         exclude:
           # Already tested in smoke
           - os: ubuntu-latest
-            python-version: "3.14"
+            python-version: "3.15"
           - os: windows-latest
-            python-version: "3.14"
+            python-version: "3.15"
           - os: ubuntu-latest
             python-version: "3.12"
     steps:
@@ -158,10 +160,12 @@ jobs:
           allow-prereleases: true
 
       - name: Install dependencies
-        run: uv sync --dev
+        # Scoped to the test group: sphinx-autobuild (docs group) pulls in
+        # watchfiles, which has no Python 3.15 wheel/PyO3 support yet.
+        run: uv sync --no-default-groups --group test
 
       - name: Run tests with coverage
-        run: uv run pytest tests/ -v --cov=src/litestar_permissions --cov-report=term-missing --cov-report=xml
+        run: uv run --no-default-groups --group test pytest tests/ -v --cov=src/litestar_permissions --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
