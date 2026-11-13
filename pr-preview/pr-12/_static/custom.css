@@ -1,0 +1,41 @@
+/* Custom CSS for litestar-permissions documentation */
+
+.highlight pre {
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.admonition {
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+}
+
+table.docutils {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+table.docutils th,
+table.docutils td {
+    padding: 0.75rem;
+    border: 1px solid var(--color-table-border);
+}
+
+code.literal {
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+}
+
+dl.py.class > dt,
+dl.py.function > dt,
+dl.py.method > dt {
+    padding: 0.75rem;
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-tree .reference {
+    display: block;
+    padding: 0.25rem 0;
+}
